@@ -6,7 +6,7 @@ EndpointGuard is being built as a test library that verifies authorization by se
 
 ## Status
 
-Early development: milestones 1 to 4 (endpoint discovery, the endpoint model, anonymous probes, and the public endpoint policy). Reporting and JUnit integration are not implemented yet. No artifacts have been published to Maven Central.
+Early development: milestones 1 to 5 are implemented. No artifacts have been published to Maven Central yet; build locally with `./mvnw install`.
 
 ## Endpoint discovery
 
@@ -48,6 +48,68 @@ Outcomes:
 
 Limitations: authorization checks inside handler code, in deeper service layers, or in servlet filters outside Spring Security are not seen. `@PreAuthorize` expressions that read handler arguments see `null`.
 
+## Quick start
+
+Add the test dependency, plus `endpointguard-core` for the `@PublicEndpoint` annotation:
+
+```xml
+<dependency>
+    <groupId>io.github.knmaher</groupId>
+    <artifactId>endpointguard-spring-test</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>io.github.knmaher</groupId>
+    <artifactId>endpointguard-core</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+Add one test class:
+
+```java
+class ApiSecurityTest implements EndpointGuardTest {
+}
+```
+
+It starts the application like `@SpringBootTest`, discovers every endpoint, sends an anonymous request through the real Spring Security configuration, and fails when an endpoint that is not declared `@PublicEndpoint` lets the request through. Annotate the class with `@SpringBootTest(...)` to customize the context.
+
+Example failure:
+
+```text
+EndpointGuard
+
+Scanned 2 endpoints for anonymous access.
+
+FAIL DELETE /api/admin/users/{id}
+
+  Security contract violation: anonymous request was accepted.
+
+  Observed:
+      Anonymous DELETE /api/admin/users/1 passed the SecurityFilterChain and method security.
+  Expected:
+      401 Unauthorized or 403 Forbidden (endpoint is not declared @PublicEndpoint)
+  Controller:
+      AdminController.deleteUser(UUID)
+  Possible causes:
+      - Endpoint missing from the SecurityFilterChain rules
+      - Request matcher broader than intended (for example /api/**)
+      - Endpoint unintentionally covered by permitAll()
+      - Endpoint is meant to be public: annotate it with @PublicEndpoint
+
+PASS GET    /api/products
+
+------------------------------------------------------------
+
+Endpoints scanned: 2
+Passed:            1
+Violations:        1
+Inconclusive:      0
+```
+
+The controller method is never invoked during the scan, so endpoints like the `DELETE` above cannot change data.
+
 ## Build
 
 Install JDK 21 or newer, then run:
@@ -84,16 +146,16 @@ The annotation documents intent only; it does not change Spring Security's behav
 
 ## Modules
 
-- `endpointguard-core`: framework-independent model, `@PublicEndpoint`, and the public endpoint policy; reporting comes later.
-- `endpointguard-spring-test`: Spring MVC endpoint discovery and anonymous probes; JUnit integration comes later.
-- `endpointguard-sample`: minimal Spring Boot application with a context smoke test.
+- `endpointguard-core`: framework-independent model, `@PublicEndpoint`, the public endpoint policy, and the console report. No dependencies.
+- `endpointguard-spring-test`: Spring MVC endpoint discovery, anonymous probes, and `EndpointGuardTest`.
+- `endpointguard-sample`: small Spring Boot application with public, authenticated, and admin endpoints, verified by `ApiSecurityTest`.
 
 The foundation uses Spring Boot 4.0.8, Spring Framework 7, Spring Security, and JUnit Jupiter 5.14.1. JUnit 5 is explicitly pinned because Boot 4 manages JUnit 6 by default.
 
 ## Next steps
 
-1. Report violations with the affected controller and likely causes.
-2. Provide `@EndpointGuardTest` so a single annotated test class verifies every endpoint and fails the build on violations.
+1. Sample application scenarios that show a misconfiguration being caught.
+2. README polish, then the 0.1.0 release.
 
 The first release focuses on anonymous access. Role matrices and security snapshots come later.
 
