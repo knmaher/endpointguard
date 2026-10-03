@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.0.8</version>
+    <relativePath/>
+  </parent>
+  <groupId>io.github.knmaher</groupId>
+  <artifactId>endpointguard-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>EndpointGuard</name>
+  <description>Authorization contract testing for Spring Boot applications.</description>
+  <url>https://github.com/knmaher/endpointguard</url>
+  <licenses><license><name>Apache License, Version 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0</url><distribution>repo</distribution></license></licenses>
+  <scm><connection>scm:git:https://github.com/knmaher/endpointguard.git</connection><developerConnection>scm:git:ssh://git@github.com/knmaher/endpointguard.git</developerConnection><url>https://github.com/knmaher/endpointguard</url></scm>
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.14.1</junit.version>
+  </properties>
+  <modules>
+    <module>endpointguard-core</module>
+    <module>endpointguard-spring-test</module>
+    <module>endpointguard-sample</module>
+  </modules>
+</project>
