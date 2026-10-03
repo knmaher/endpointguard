@@ -9,3 +9,4 @@
 - Add the `EndpointDescriptor` model in core, independent of Spring.
 - Discover Spring MVC endpoints through `SpringMvcEndpointDiscovery`, excluding Spring's own handlers by default.
 - Probe anonymous access with `AnonymousProbe`: requests pass the real `SecurityFilterChain` and controller method security, but the controller method is never invoked.
+- Add `@PublicEndpoint` and the protected-by-default `PublicEndpointPolicy`, which turns probe results into `PASSED`, `VIOLATION`, or `INCONCLUSIVE` verdicts.

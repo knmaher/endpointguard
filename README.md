@@ -6,7 +6,7 @@ EndpointGuard is being built as a test library that verifies authorization by se
 
 ## Status
 
-Early development: milestones 1 to 3 (endpoint discovery, the endpoint model, and anonymous probes). Public endpoint policy and reporting are not implemented yet. No artifacts have been published to Maven Central.
+Early development: milestones 1 to 4 (endpoint discovery, the endpoint model, anonymous probes, and the public endpoint policy). Reporting and JUnit integration are not implemented yet. No artifacts have been published to Maven Central.
 
 ## Endpoint discovery
 
@@ -58,9 +58,33 @@ Install JDK 21 or newer, then run:
 
 On Windows, use `mvnw.cmd verify`. The wrapper downloads Maven 3.9.11 on its first run; dependency downloads require internet access. Development uses JDK 25; production compilation targets Java 21. CI verifies both JDK 21 and 25.
 
+## Public endpoints
+
+Every endpoint is expected to reject anonymous requests unless it is declared public:
+
+```java
+@PublicEndpoint
+@GetMapping("/api/products")
+List<Product> products() { ... }
+```
+
+Put `@PublicEndpoint` on a handler method, or on a controller class to cover all of its handlers. It lives in `endpointguard-core`, which has no dependencies; because it annotates production code, add that artifact with `compile` scope.
+
+`PublicEndpointPolicy` compares each probe result with the declaration:
+
+| Expected | Probe result | Verdict |
+|---|---|---|
+| protected | `DENIED` | `PASSED` |
+| protected | `ALLOWED` | `VIOLATION`: possibly exposed by accident |
+| public | `ALLOWED` | `PASSED` |
+| public | `DENIED` | `VIOLATION`: declared public but rejects anonymous requests |
+| either | `INCONCLUSIVE` | `INCONCLUSIVE` |
+
+The annotation documents intent only; it does not change Spring Security's behavior.
+
 ## Modules
 
-- `endpointguard-core`: framework-independent model (`EndpointDescriptor`, `AuthorizationResult`); policies and reporting come later.
+- `endpointguard-core`: framework-independent model, `@PublicEndpoint`, and the public endpoint policy; reporting comes later.
 - `endpointguard-spring-test`: Spring MVC endpoint discovery and anonymous probes; JUnit integration comes later.
 - `endpointguard-sample`: minimal Spring Boot application with a context smoke test.
 
@@ -68,8 +92,8 @@ The foundation uses Spring Boot 4.0.8, Spring Framework 7, Spring Security, and 
 
 ## Next steps
 
-1. Declare intentionally public endpoints with `@PublicEndpoint` and treat everything else as protected.
-2. Report violations with the affected controller and likely causes.
+1. Report violations with the affected controller and likely causes.
+2. Provide `@EndpointGuardTest` so a single annotated test class verifies every endpoint and fails the build on violations.
 
 The first release focuses on anonymous access. Role matrices and security snapshots come later.
 
