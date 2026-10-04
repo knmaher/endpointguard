@@ -6,7 +6,7 @@ EndpointGuard is being built as a test library that verifies authorization by se
 
 ## Status
 
-Early development: milestones 1 to 5 are implemented. No artifacts have been published to Maven Central yet; build locally with `./mvnw install`.
+Early development: milestones 1 to 7 are implemented. No artifacts have been published to Maven Central yet; build locally with `./mvnw install`.
 
 ## Endpoint discovery
 
@@ -112,6 +112,48 @@ The controller method is never invoked during the scan, so endpoints like the `D
 
 `endpointguard-spring-test` expects the application to provide Spring MVC, Spring Security, and `spring-boot-starter-test`; it only brings `spring-security-test` itself, versioned by your Spring Boot dependency management.
 
+## See it catch a misconfiguration
+
+The sample application has a correct security configuration and a deliberately broken one (Spring profile `insecure`), where a broad rule is placed before the admin rule:
+
+```java
+.requestMatchers("/api/**").permitAll()              // meant to open "the API"...
+.requestMatchers("/api/admin/**").hasRole("ADMIN")   // ...so this rule never applies
+```
+
+Run EndpointGuard against it:
+
+```sh
+./mvnw -pl endpointguard-sample -am verify -Dendpointguard.demo=insecure
+```
+
+The build fails:
+
+```text
+PASS GET    /api/admin
+FAIL DELETE /api/admin/users/{id}
+
+  Security contract violation: anonymous request was accepted.
+
+  Observed:
+      Anonymous DELETE /api/admin/users/1 passed the SecurityFilterChain and method security.
+  Expected:
+      401 Unauthorized or 403 Forbidden (endpoint is not declared @PublicEndpoint)
+  Controller:
+      ApiController.deleteUser(UUID)
+  ...
+
+FAIL GET    /api/profile
+  ...
+PASS GET    /api/public
+
+Endpoints scanned: 4
+Passed:            2
+Violations:        2
+```
+
+`GET /api/admin` still passes because it is also protected by `@PreAuthorize`; `DELETE /api/admin/users/{id}` relied on the URL rules alone. Without the `-Dendpointguard.demo` flag the demo is skipped, and `InsecureConfigurationTest` asserts these exact findings so the regular build stays green.
+
 ## Build
 
 Install JDK 21 or newer, then run:
@@ -151,14 +193,14 @@ The annotation documents intent only; it does not change Spring Security's behav
 - `endpointguard-annotations`: `@PublicEndpoint`, for production code. No dependencies.
 - `endpointguard-core`: framework-independent model, public endpoint policy, and console report.
 - `endpointguard-spring-test`: Spring MVC endpoint discovery, anonymous probes, and `EndpointGuardTest`.
-- `endpointguard-sample`: small Spring Boot application with public, authenticated, and admin endpoints, verified by `ApiSecurityTest`.
+- `endpointguard-sample`: small Spring Boot application with public, authenticated, and admin endpoints, a correct and a deliberately broken (`insecure` profile) security configuration, and the tests that verify both.
 
 The foundation uses Spring Boot 4.0.8, Spring Framework 7, Spring Security, and JUnit Jupiter 5.14.1. JUnit 5 is explicitly pinned because Boot 4 manages JUnit 6 by default.
 
 ## Next steps
 
-1. Sample application scenarios that show a misconfiguration being caught.
-2. README polish, then the 0.1.0 release.
+1. README polish: supported versions, limitations, and configuration.
+2. Maven Central publishing setup, then the 0.1.0 release.
 
 The first release focuses on anonymous access. Role matrices and security snapshots come later.
 
