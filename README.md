@@ -46,11 +46,11 @@ Outcomes:
 - `ALLOWED`: the request passed every check and would have reached the handler.
 - `INCONCLUSIVE`: anything else, reported with the status and reason instead of guessed.
 
-Limitations: authorization checks inside handler code, in deeper service layers, or in servlet filters outside Spring Security are not seen. `@PreAuthorize` expressions that read handler arguments see `null`.
+Limitations: authorization checks inside handler code, in deeper service layers, or in servlet filters outside Spring Security are not seen. `@PreAuthorize` expressions that read handler arguments see `null`. If EndpointGuard cannot find Spring Security's method interceptors for an annotated handler, it reports the endpoint as `INCONCLUSIVE` rather than allowed.
 
 ## Quick start
 
-Add the test dependency, plus `endpointguard-core` for the `@PublicEndpoint` annotation:
+Add the test dependency, plus the tiny `endpointguard-annotations` artifact for `@PublicEndpoint`:
 
 ```xml
 <dependency>
@@ -61,7 +61,7 @@ Add the test dependency, plus `endpointguard-core` for the `@PublicEndpoint` ann
 </dependency>
 <dependency>
     <groupId>io.github.knmaher</groupId>
-    <artifactId>endpointguard-core</artifactId>
+    <artifactId>endpointguard-annotations</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -108,7 +108,9 @@ Violations:        1
 Inconclusive:      0
 ```
 
-The controller method is never invoked during the scan, so endpoints like the `DELETE` above cannot change data.
+The controller method is never invoked during the scan, so endpoints like the `DELETE` above cannot change data. On success nothing is printed; the report is published as a JUnit report entry that IDEs show next to the test.
+
+`endpointguard-spring-test` expects the application to provide Spring MVC, Spring Security, and `spring-boot-starter-test`; it only brings `spring-security-test` itself, versioned by your Spring Boot dependency management.
 
 ## Build
 
@@ -130,7 +132,7 @@ Every endpoint is expected to reject anonymous requests unless it is declared pu
 List<Product> products() { ... }
 ```
 
-Put `@PublicEndpoint` on a handler method, or on a controller class to cover all of its handlers. It lives in `endpointguard-core`, which has no dependencies; because it annotates production code, add that artifact with `compile` scope.
+Put `@PublicEndpoint` on a handler method, or on a controller class to cover all of its handlers. It lives in `endpointguard-annotations` (package `io.github.knmaher.endpointguard.annotation`), which contains only annotations and has no dependencies; because it annotates production code, add that artifact with `compile` scope.
 
 `PublicEndpointPolicy` compares each probe result with the declaration:
 
@@ -146,7 +148,8 @@ The annotation documents intent only; it does not change Spring Security's behav
 
 ## Modules
 
-- `endpointguard-core`: framework-independent model, `@PublicEndpoint`, the public endpoint policy, and the console report. No dependencies.
+- `endpointguard-annotations`: `@PublicEndpoint`, for production code. No dependencies.
+- `endpointguard-core`: framework-independent model, public endpoint policy, and console report.
 - `endpointguard-spring-test`: Spring MVC endpoint discovery, anonymous probes, and `EndpointGuardTest`.
 - `endpointguard-sample`: small Spring Boot application with public, authenticated, and admin endpoints, verified by `ApiSecurityTest`.
 

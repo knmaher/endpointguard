@@ -13,3 +13,8 @@
 - Add `EndpointGuardTest`: a test class implementing it verifies every endpoint and fails with a readable report on violations.
 - Add `SecurityReport`, `ConsoleReportRenderer`, and the `EndpointGuard.scan`/`verify` entry points.
 - The sample application now has public, authenticated, and admin endpoints verified by `ApiSecurityTest`.
+- Move `@PublicEndpoint` into the dependency-free `endpointguard-annotations` artifact (package `io.github.knmaher.endpointguard.annotation`).
+- Spring, JUnit, and servlet dependencies of `endpointguard-spring-test` are now `provided`, so EndpointGuard never imposes versions on applications.
+- Adopt JSpecify null-safety annotations; `AuthorizationResult.status` is a nullable `Integer`.
+- `EndpointGuard.verify` no longer prints; `EndpointGuardTest` publishes the report as a JUnit report entry.
+- Report `INCONCLUSIVE` instead of `ALLOWED` when method security is enabled but its interceptors cannot be found.
