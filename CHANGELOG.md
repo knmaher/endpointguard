@@ -18,3 +18,4 @@
 - Adopt JSpecify null-safety annotations; `AuthorizationResult.status` is a nullable `Integer`.
 - `EndpointGuard.verify` no longer prints; `EndpointGuardTest` publishes the report as a JUnit report entry.
 - Report `INCONCLUSIVE` instead of `ALLOWED` when method security is enabled but its interceptors cannot be found.
+- Sample application: a deliberately broken `insecure` profile (misplaced `/api/**` permitAll), a test asserting EndpointGuard catches it, and an opt-in demo (`-Dendpointguard.demo=insecure`) that fails the build.
