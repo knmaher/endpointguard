@@ -5,12 +5,20 @@
   <artifactId>endpointguard-spring-test</artifactId>
   <dependencies>
     <dependency><groupId>io.github.knmaher</groupId><artifactId>endpointguard-core</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>org.springframework</groupId><artifactId>spring-webmvc</artifactId></dependency>
-    <dependency><groupId>org.springframework</groupId><artifactId>spring-test</artifactId></dependency>
+    <!--
+      Testing support the application does not otherwise have. Its version is aligned by the
+      application's Spring Boot dependency management.
+    -->
     <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId></dependency>
-    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId></dependency>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-test</artifactId></dependency>
-    <!-- Supplied by the application under test (embedded server or spring-test mocks). -->
+
+    <!--
+      Supplied by the application under test (spring-boot-starter-webmvc, -security and -test).
+      Provided scope keeps EndpointGuard from imposing its own versions on the application.
+    -->
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-webmvc</artifactId><scope>provided</scope></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-test</artifactId><scope>provided</scope></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-test</artifactId><scope>provided</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId><scope>provided</scope></dependency>
     <dependency><groupId>jakarta.servlet</groupId><artifactId>jakarta.servlet-api</artifactId><scope>provided</scope></dependency>
 
     <!-- Integration tests run discovery against a real Spring Boot application. -->
