@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import io.github.knmaher.endpointguard.PolicyVerdict;
 import io.github.knmaher.endpointguard.PolicyVerdict.Verdict;
-import io.github.knmaher.endpointguard.PublicEndpoint;
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
 import io.github.knmaher.endpointguard.PublicEndpointPolicy;
 
 import org.junit.jupiter.api.Test;

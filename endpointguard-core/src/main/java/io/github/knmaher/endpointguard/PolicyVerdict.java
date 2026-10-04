@@ -35,7 +35,7 @@ public record PolicyVerdict(AuthorizationResult result, ExpectedAccess expected,
         return verdict == Verdict.VIOLATION && expected == ExpectedAccess.PROTECTED;
     }
 
-    /** Returns {@code true} for a {@link PublicEndpoint} that rejected an anonymous request. */
+    /** Returns {@code true} for a {@link io.github.knmaher.endpointguard.annotation.PublicEndpoint @PublicEndpoint} that rejected an anonymous request. */
     public boolean isPublicEndpointDenied() {
         return verdict == Verdict.VIOLATION && expected == ExpectedAccess.PUBLIC;
     }

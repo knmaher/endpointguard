@@ -2,7 +2,7 @@ package io.github.knmaher.endpointguard.spring;
 
 import java.util.UUID;
 
-import io.github.knmaher.endpointguard.PublicEndpoint;
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
 
 import org.junit.jupiter.api.Test;
 import org.junit.platform.testkit.engine.EngineTestKit;

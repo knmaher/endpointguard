@@ -20,7 +20,7 @@ import org.springframework.web.context.WebApplicationContext;
  * annotation takes precedence.
  *
  * <p>The test fails when an endpoint that is not declared
- * {@link io.github.knmaher.endpointguard.PublicEndpoint @PublicEndpoint} accepts anonymous
+ * {@link io.github.knmaher.endpointguard.annotation.PublicEndpoint @PublicEndpoint} accepts anonymous
  * requests, or a declared public endpoint rejects them.
  */
 @SpringBootTest

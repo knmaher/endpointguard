@@ -1,5 +1,7 @@
 package io.github.knmaher.endpointguard;
 
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
+
 import java.util.Objects;
 
 /**
