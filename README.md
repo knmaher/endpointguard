@@ -1,56 +1,16 @@
-# EndpointGuard
+# EndpointGuard 🔐
 
 Catch accidentally exposed Spring Boot endpoints before they reach production.
 
-EndpointGuard is being built as a test library that verifies authorization by sending requests through an application's real Spring Security filter chain.
+Your application has 80 REST endpoints. Are you certain all 80 have the correct authorization rules?
 
-## Status
+EndpointGuard verifies them automatically. It discovers every Spring MVC endpoint, sends an anonymous request through your **real** Spring Security configuration, and fails the build when an endpoint you did not declare public lets the request through.
 
-Early development: milestones 1 to 7 are implemented. No artifacts have been published to Maven Central yet; build locally with `./mvnw install`.
-
-## Endpoint discovery
-
-`SpringMvcEndpointDiscovery` reads Spring MVC's own request mapping registry and returns one `EndpointDescriptor` per HTTP method and path:
-
-```java
-List<EndpointDescriptor> endpoints = new SpringMvcEndpointDiscovery(applicationContext).discover();
-// GET /api/users             -> UserController.getUsers()
-// DELETE /api/users/{id}     -> UserController.deleteUser(UUID)
-```
-
-- Handlers declared by Spring itself, such as Boot's `/error`, are excluded. Use `includingFrameworkEndpoints()` to include them.
-- A mapping without an HTTP method accepts any method, so it is reported for GET, POST, PUT, PATCH, and DELETE.
-- Paths are reported as declared in the mappings, relative to the dispatcher servlet. A custom `spring.mvc.servlet.path` is not prepended yet.
-
-## Anonymous probes
-
-`AnonymousProbe` sends an anonymous request for an endpoint through the application's real Spring Security configuration:
-
-```java
-AnonymousProbe probe = new AnonymousProbe(webApplicationContext);
-AuthorizationResult result = probe.probe(endpoint);
-// DENIED  401 - Anonymous GET /api/profile was rejected by the SecurityFilterChain with HTTP 401 Unauthorized.
-// ALLOWED     - Anonymous DELETE /api/admin/users/1 passed the SecurityFilterChain and method security.
-```
-
-How it stays safe:
-
-- The request passes the `SecurityFilterChain`, then the controller method's `@PreAuthorize`, `@Secured`, and `@RolesAllowed` checks. **The controller method is never invoked**, so probing `DELETE` or `POST` endpoints cannot change application state.
-- Path variables are filled with `1`. No request body is sent; the handler never reads one.
-- A valid CSRF token is sent, because CSRF protection is not authorization.
-- The probe is always anonymous, even inside a test annotated with `@WithMockUser`.
-
-Outcomes:
-
-- `DENIED`: HTTP 401 or 403, or a redirect issued by Spring Security (for example to a login page).
-- `ALLOWED`: the request passed every check and would have reached the handler.
-- `INCONCLUSIVE`: anything else, reported with the status and reason instead of guessed.
-
-Limitations: authorization checks inside handler code, in deeper service layers, or in servlet filters outside Spring Security are not seen. `@PreAuthorize` expressions that read handler arguments see `null`. If EndpointGuard cannot find Spring Security's method interceptors for an annotated handler, it reports the endpoint as `INCONCLUSIVE` rather than allowed.
+> **Status:** pre-release. Nothing is published to Maven Central yet; build it locally with `./mvnw install` (see [Building from source](#building-from-source)).
 
 ## Quick start
 
-Add the test dependency, plus the tiny `endpointguard-annotations` artifact for `@PublicEndpoint`:
+**1. Add the dependencies.** The test library, plus the tiny annotations artifact for production code:
 
 ```xml
 <dependency>
@@ -66,22 +26,24 @@ Add the test dependency, plus the tiny `endpointguard-annotations` artifact for 
 </dependency>
 ```
 
-Add one test class:
+**2. Add one test class:**
 
 ```java
 class ApiSecurityTest implements EndpointGuardTest {
 }
 ```
 
-It starts the application like `@SpringBootTest`, discovers every endpoint, sends an anonymous request through the real Spring Security configuration, and fails when an endpoint that is not declared `@PublicEndpoint` lets the request through. Annotate the class with `@SpringBootTest(...)` to customize the context.
+**3. Declare the endpoints that are meant to be public.** Everything else must reject anonymous requests:
 
-Example failure:
+```java
+@PublicEndpoint
+@GetMapping("/api/products")
+List<Product> products() { ... }
+```
+
+**4. Run your tests.** When an endpoint is exposed, the build fails:
 
 ```text
-EndpointGuard
-
-Scanned 2 endpoints for anonymous access.
-
 FAIL DELETE /api/admin/users/{id}
 
   Security contract violation: anonymous request was accepted.
@@ -108,41 +70,93 @@ Violations:        1
 Inconclusive:      0
 ```
 
-The controller method is never invoked during the scan, so endpoints like the `DELETE` above cannot change data. On success nothing is printed; the report is published as a JUnit report entry that IDEs show next to the test.
+The `DELETE` handler above was **not executed** during the scan. EndpointGuard never invokes controller methods, so it cannot change your data.
 
-`endpointguard-spring-test` expects the application to provide Spring MVC, Spring Security, and `spring-boot-starter-test`; it only brings `spring-security-test` itself, versioned by your Spring Boot dependency management.
+## Supported versions
 
-## See it catch a misconfiguration
+| | Supported |
+|---|---|
+| Java | 21 or newer (CI runs 21 and 25) |
+| Spring Boot | 4.0.x (built against 4.0.8) |
+| Spring Framework | 7.0 |
+| Spring Security | 7.0 |
+| Web stack | Spring MVC (servlet). WebFlux is not supported. |
+| Test framework | JUnit Jupiter, as managed by Spring Boot 4 (JUnit 6) |
 
-The sample application has a correct security configuration and a deliberately broken one (Spring profile `insecure`), where a broad rule is placed before the admin rule:
+Spring Boot 3 support may come later as a separate artifact if there is demand.
+
+## Why EndpointGuard
+
+Authorization bugs rarely look wrong in code review. A controller can look perfectly secure while one broad rule in the security configuration exposes it:
 
 ```java
 .requestMatchers("/api/**").permitAll()              // meant to open "the API"...
 .requestMatchers("/api/admin/**").hasRole("ADMIN")   // ...so this rule never applies
 ```
 
-Run EndpointGuard against it:
+Reading annotations or configuration cannot tell you what Spring Security actually does with a request. EndpointGuard asks it: every check runs through the application's own `SecurityFilterChain` and method security. That matters even more when code is generated faster than it is reviewed. AI writes code; EndpointGuard verifies authorization.
+
+## How it works
+
+1. **Discover.** Spring MVC's own request mapping registry lists every endpoint: one entry per HTTP method and path. Spring's internal handlers (such as `/error`) are skipped. A mapping without an HTTP method is checked for GET, POST, PUT, PATCH, and DELETE, because any of them reaches it.
+2. **Probe.** For each endpoint, an anonymous request goes through the real `SecurityFilterChain`, then through the controller method's `@PreAuthorize`, `@Secured`, and `@RolesAllowed` checks. The request then stops; the controller method is never called.
+3. **Compare.** The result is checked against the declared intent: protected by default, public only with `@PublicEndpoint`.
+4. **Report.** Every endpoint gets a line; violations explain what happened, what was expected, which controller method is affected, and the likely causes.
+
+Probe details:
+
+- Path variables are filled with `1`; no request body is sent.
+- A valid CSRF token is sent, because CSRF protection is not authorization.
+- Probes are always anonymous, even inside a test that runs with `@WithMockUser`.
+
+| Probe result | Meaning |
+|---|---|
+| `DENIED` | HTTP 401 or 403, or a redirect issued by Spring Security (for example to a login page) |
+| `ALLOWED` | The request passed every check and would have reached the controller |
+| `INCONCLUSIVE` | Anything else, reported with the status and the reason instead of guessed |
+
+| Declared | Probe result | Verdict |
+|---|---|---|
+| protected (default) | `DENIED` | pass |
+| protected (default) | `ALLOWED` | **violation**: possibly exposed by accident |
+| `@PublicEndpoint` | `ALLOWED` | pass |
+| `@PublicEndpoint` | `DENIED` | **violation**: declared public but rejects anonymous requests |
+| either | `INCONCLUSIVE` | reported, does not fail the build |
+
+## Public endpoints
+
+Put `@PublicEndpoint` on a handler method, or on a controller class to cover all of its handlers (subclasses inherit it). It lives in `endpointguard-annotations` (package `io.github.knmaher.endpointguard.annotation`), which contains only annotations and has no dependencies, so it is safe on the production classpath.
+
+The annotation documents intent only. It does not change Spring Security's behavior; EndpointGuard checks that the two agree, in both directions, so a stale annotation is caught too.
+
+## Configuration
+
+Version 0.1 is deliberately configuration-free. What you can adjust:
+
+- **The application context.** `EndpointGuardTest` uses `@SpringBootTest` defaults. Annotate your test class with `@SpringBootTest(...)`, `@ActiveProfiles`, `@TestPropertySource`, and so on; they take precedence.
+- **Programmatic use.** Call the entry points directly from any test with a `WebApplicationContext`:
+
+  ```java
+  SecurityReport report = EndpointGuard.scan(context);   // returns the report
+  EndpointGuard.verify(context);                         // throws AssertionError on violations
+  ```
+
+- **Output.** On success nothing is printed; the report is published as a JUnit report entry that IDEs show next to the test. On failure the full report is the assertion message.
+
+## See it catch a misconfiguration
+
+The sample application has a correct security configuration and the deliberately broken one shown above (Spring profile `insecure`). Run EndpointGuard against it:
 
 ```sh
 ./mvnw -pl endpointguard-sample -am verify -Dendpointguard.demo=insecure
 ```
 
-The build fails:
+The build fails with two violations:
 
 ```text
 PASS GET    /api/admin
 FAIL DELETE /api/admin/users/{id}
-
-  Security contract violation: anonymous request was accepted.
-
-  Observed:
-      Anonymous DELETE /api/admin/users/1 passed the SecurityFilterChain and method security.
-  Expected:
-      401 Unauthorized or 403 Forbidden (endpoint is not declared @PublicEndpoint)
-  Controller:
-      ApiController.deleteUser(UUID)
   ...
-
 FAIL GET    /api/profile
   ...
 PASS GET    /api/public
@@ -152,59 +166,52 @@ Passed:            2
 Violations:        2
 ```
 
-`GET /api/admin` still passes because it is also protected by `@PreAuthorize`; `DELETE /api/admin/users/{id}` relied on the URL rules alone. Without the `-Dendpointguard.demo` flag the demo is skipped, and `InsecureConfigurationTest` asserts these exact findings so the regular build stays green.
+`GET /api/admin` still passes because `@PreAuthorize` protects it as a second layer; `DELETE /api/admin/users/{id}` relied on the URL rules alone. Without the flag the demo is skipped, and `InsecureConfigurationTest` asserts these exact findings so the regular build stays green.
 
-## Build
+## Limitations
 
-Install JDK 21 or newer, then run:
-
-```sh
-./mvnw verify
-```
-
-On Windows, use `mvnw.cmd verify`. The wrapper downloads Maven 3.9.11 on its first run; dependency downloads require internet access. Development uses JDK 25; production compilation targets Java 21. CI verifies both JDK 21 and 25.
-
-## Public endpoints
-
-Every endpoint is expected to reject anonymous requests unless it is declared public:
-
-```java
-@PublicEndpoint
-@GetMapping("/api/products")
-List<Product> products() { ... }
-```
-
-Put `@PublicEndpoint` on a handler method, or on a controller class to cover all of its handlers. It lives in `endpointguard-annotations` (package `io.github.knmaher.endpointguard.annotation`), which contains only annotations and has no dependencies; because it annotates production code, add that artifact with `compile` scope.
-
-`PublicEndpointPolicy` compares each probe result with the declaration:
-
-| Expected | Probe result | Verdict |
-|---|---|---|
-| protected | `DENIED` | `PASSED` |
-| protected | `ALLOWED` | `VIOLATION`: possibly exposed by accident |
-| public | `ALLOWED` | `PASSED` |
-| public | `DENIED` | `VIOLATION`: declared public but rejects anonymous requests |
-| either | `INCONCLUSIVE` | `INCONCLUSIVE` |
-
-The annotation documents intent only; it does not change Spring Security's behavior.
+- **Anonymous access only.** Version 0.1 checks whether endpoints reject anonymous requests. Role-based checks (USER vs. ADMIN) are planned for 0.2.
+- **Web-layer authorization only.** Checks inside handler code, in deeper service layers, or in servlet filters outside Spring Security are not seen. An endpoint protected only that way is reported as allowed.
+- **Method security without arguments.** `@PreAuthorize` expressions that read handler arguments (for example `#id == principal.id`) see `null`. If Spring Security's method interceptors cannot be found for an annotated handler, the endpoint is reported `INCONCLUSIVE`, never allowed.
+- **Placeholder path values.** Path variables are filled with `1`. Security rules that match specific values or patterns of a path variable may not match the probe as they would a real request.
+- **Servlet path.** A custom `spring.mvc.servlet.path` is not prepended to reported paths.
+- **Inconclusive results do not fail the build.** They are listed in the report so you can investigate.
+- **Not a security scanner.** EndpointGuard verifies your authorization contract. It does not replace Spring Security, penetration testing, or static analysis.
 
 ## Modules
 
-- `endpointguard-annotations`: `@PublicEndpoint`, for production code. No dependencies.
-- `endpointguard-core`: framework-independent model, public endpoint policy, and console report.
-- `endpointguard-spring-test`: Spring MVC endpoint discovery, anonymous probes, and `EndpointGuardTest`.
-- `endpointguard-sample`: small Spring Boot application with public, authenticated, and admin endpoints, a correct and a deliberately broken (`insecure` profile) security configuration, and the tests that verify both.
+| Artifact | Scope | Purpose |
+|---|---|---|
+| `endpointguard-annotations` | compile | `@PublicEndpoint`. No dependencies. |
+| `endpointguard-spring-test` | test | Discovery, probes, and `EndpointGuardTest`. Expects the application to provide Spring MVC, Spring Security, and `spring-boot-starter-test`; brings only `spring-security-test`, versioned by your Spring Boot dependency management. |
+| `endpointguard-core` | (transitive) | Framework-independent model, policy, and report. |
+| `endpointguard-sample` | not published | Sample application with secure and insecure configurations. |
 
-The foundation uses Spring Boot 4.0.8, Spring Framework 7, Spring Security, and JUnit Jupiter 5.14.1. JUnit 5 is explicitly pinned because Boot 4 manages JUnit 6 by default.
+## Building from source
 
-## Next steps
+Install JDK 21 or newer, then:
 
-1. README polish: supported versions, limitations, and configuration.
-2. Maven Central publishing setup, then the 0.1.0 release.
+```sh
+./mvnw verify        # build and run all tests
+./mvnw install       # make the snapshot available to your own projects
+```
 
-The first release focuses on anonymous access. Role matrices and security snapshots come later.
+On Windows, use `mvnw.cmd`. The wrapper downloads Maven 3.9.11 on its first run.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidance and [SECURITY.md](SECURITY.md) for vulnerability reporting.
+## Roadmap
+
+- **0.1:** anonymous access verification (this release).
+- **0.2:** role-based authorization matrix (anonymous, USER, ADMIN, ...).
+- **0.3:** security contract snapshots that flag authorization changes in pull requests.
+- Later: JSON and SARIF output, GitHub Code Scanning integration.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## License
 

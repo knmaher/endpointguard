@@ -1,9 +1,17 @@
 # Security policy
 
-EndpointGuard is pre-release software. There are no supported release versions yet, and the current foundation does not perform authorization checks.
+## Supported versions
 
-Please report suspected vulnerabilities privately through [GitHub private vulnerability reporting](https://github.com/knmaher/endpointguard/security/advisories/new) when available. If private reporting is unavailable, open an issue requesting a private contact channel without disclosing exploit details, credentials, or application data.
+EndpointGuard has not been released yet. Until 0.1.0 is published, only the latest commit on `main` receives fixes. After that, fixes go into the latest released minor version.
 
-Include the affected version or commit, reproduction steps, expected behavior, and impact. Response times are not guaranteed during early development.
+## Reporting a vulnerability
 
-EndpointGuard is intended as an additional test check. Its future reports will depend on configured policies, supported request shapes, and the application's test environment.
+Please report suspected vulnerabilities privately through [GitHub private vulnerability reporting](https://github.com/knmaher/endpointguard/security/advisories/new). Do not open a public issue with exploit details, credentials, or application data.
+
+Include the affected version or commit, reproduction steps, expected behavior, and impact. Response times are best effort while the project is maintained by one person.
+
+## What counts as a vulnerability
+
+EndpointGuard is a test library, so the most serious issue is a **false pass**: an endpoint that accepts anonymous requests but is reported as protected. Please report those as vulnerabilities. Also report anything that makes a scan execute application code it should not, such as a controller method being invoked.
+
+Known limitations listed in the README (for example authorization checks inside handler code, which EndpointGuard does not see) are not vulnerabilities.
