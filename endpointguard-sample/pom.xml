@@ -3,6 +3,8 @@
   <modelVersion>4.0.0</modelVersion>
   <parent><groupId>io.github.knmaher</groupId><artifactId>endpointguard-parent</artifactId><version>0.1.0-SNAPSHOT</version></parent>
   <artifactId>endpointguard-sample</artifactId>
+  <name>EndpointGuard Sample</name>
+  <description>Sample Spring Boot application with secure and insecure security configurations. Not published.</description>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>

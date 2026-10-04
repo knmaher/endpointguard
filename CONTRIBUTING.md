@@ -9,3 +9,5 @@ Keep discovery, probing, policy evaluation, and reporting separate. Core should 
 Test actual Spring Security behavior. Do not infer authorization solely from annotations. Never add automatic requests that can trigger unsafe business operations without a safe execution strategy.
 
 Start with a small issue or pull request. Avoid new modules, infrastructure, or future roadmap features until the basic anonymous authorization flow works.
+
+Maintainers: see [RELEASING.md](RELEASING.md) for publishing to Maven Central.
