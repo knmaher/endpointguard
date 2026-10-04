@@ -5,6 +5,7 @@ import java.util.UUID;
 import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
 
 import org.junit.jupiter.api.Test;
+import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.testkit.engine.EngineTestKit;
 import org.junit.platform.testkit.engine.Events;
 
@@ -30,10 +31,15 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 class EndpointGuardTestTest {
 
     @Test
-    void passesForCorrectlySecuredApplication() {
+    void passesForCorrectlySecuredApplicationAndPublishesTheReport() {
         Events tests = run(SecuredApplicationTest.class);
 
-        tests.assertStatistics(stats -> stats.started(1).succeeded(1).failed(0));
+        tests.assertStatistics(stats -> stats.started(1).succeeded(1).failed(0).reportingEntryPublished(1));
+        ReportEntry entry = tests.reportingEntryPublished().stream().findFirst().orElseThrow()
+                .getRequiredPayload(ReportEntry.class);
+        assertThat(entry.getKeyValuePairs().get("EndpointGuard"))
+                .contains("PASS DELETE /api/admin/users/{id}")
+                .contains("Violations:        0");
     }
 
     @Test

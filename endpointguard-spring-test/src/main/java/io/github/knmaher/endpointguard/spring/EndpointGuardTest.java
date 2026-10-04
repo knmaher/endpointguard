@@ -1,6 +1,7 @@
 package io.github.knmaher.endpointguard.spring;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestReporter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,13 +22,15 @@ import org.springframework.web.context.WebApplicationContext;
  *
  * <p>The test fails when an endpoint that is not declared
  * {@link io.github.knmaher.endpointguard.annotation.PublicEndpoint @PublicEndpoint} accepts anonymous
- * requests, or a declared public endpoint rejects them.
+ * requests, or a declared public endpoint rejects them. On success the report is published as a
+ * JUnit report entry, which IDEs show next to the test result.
  */
 @SpringBootTest
 public interface EndpointGuardTest {
 
     @Test
-    default void endpointsMatchTheirAuthorizationContract(@Autowired WebApplicationContext context) {
-        EndpointGuard.verify(context);
+    default void endpointsMatchTheirAuthorizationContract(@Autowired WebApplicationContext context,
+            TestReporter reporter) {
+        reporter.publishEntry("EndpointGuard", EndpointGuard.render(EndpointGuard.verify(context)));
     }
 }
