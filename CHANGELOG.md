@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Initialize the Maven reactor with core, Spring test, and sample modules.
-- Target Java 21 with Spring Boot 4 and JUnit 5.
+- Target Java 21 with Spring Boot 4 and JUnit Jupiter.
 - Add Maven Wrapper and Java 21/25 CI.
 - Add project, contribution, and security documentation.
 - Add the `EndpointDescriptor` model in core, independent of Spring.
@@ -19,3 +19,5 @@
 - `EndpointGuard.verify` no longer prints; `EndpointGuardTest` publishes the report as a JUnit report entry.
 - Report `INCONCLUSIVE` instead of `ALLOWED` when method security is enabled but its interceptors cannot be found.
 - Sample application: a deliberately broken `insecure` profile (misplaced `/api/**` permitAll), a test asserting EndpointGuard catches it, and an opt-in demo (`-Dendpointguard.demo=insecure`) that fails the build.
+- Remove the `junit.version` override, which did not pin JUnit Jupiter (Spring Boot 4 manages JUnit 6) and redirected JUnit 4 to a non-existent version.
+- Restructure the README around the quick start, supported versions, configuration, and limitations; update the security policy.
