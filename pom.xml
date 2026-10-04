@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+         child.project.url.inherit.append.path="false">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -14,17 +15,119 @@
   <name>EndpointGuard</name>
   <description>Authorization contract testing for Spring Boot applications.</description>
   <url>https://github.com/knmaher/endpointguard</url>
-  <licenses><license><name>Apache License, Version 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0</url><distribution>repo</distribution></license></licenses>
-  <scm><connection>scm:git:https://github.com/knmaher/endpointguard.git</connection><developerConnection>scm:git:ssh://git@github.com/knmaher/endpointguard.git</developerConnection><url>https://github.com/knmaher/endpointguard</url></scm>
+
+  <!--
+    Published POM metadata. Developers, SCM and issue management must be declared here, otherwise
+    the values of spring-boot-starter-parent (the Spring team) are inherited. Paths are not appended
+    for child modules, so every module links to the repository root.
+  -->
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>knmaher</id>
+      <name>Maher Kassem Naser</name>
+      <url>https://github.com/knmaher</url>
+    </developer>
+  </developers>
+  <scm child.scm.connection.inherit.append.path="false"
+       child.scm.developerConnection.inherit.append.path="false"
+       child.scm.url.inherit.append.path="false">
+    <connection>scm:git:https://github.com/knmaher/endpointguard.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/knmaher/endpointguard.git</developerConnection>
+    <url>https://github.com/knmaher/endpointguard</url>
+  </scm>
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/knmaher/endpointguard/issues</url>
+  </issueManagement>
+
   <properties>
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+    <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
   </properties>
+
   <modules>
     <module>endpointguard-annotations</module>
     <module>endpointguard-core</module>
     <module>endpointguard-spring-test</module>
     <module>endpointguard-sample</module>
   </modules>
+
+  <profiles>
+    <!--
+      Maven Central release: ./mvnw -Prelease deploy
+      Requires MAVEN_GPG_KEY (ASCII-armored private key) and MAVEN_GPG_PASSPHRASE in the environment,
+      and a "central" server with a Sonatype Central user token in settings.xml. See RELEASING.md.
+    -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals><goal>jar-no-fork</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <!-- Keep link, HTML and syntax checks; do not require boilerplate on self-explanatory members. -->
+              <doclint>all,-missing</doclint>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals><goal>jar</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <configuration>
+              <!-- Signs in-process from MAVEN_GPG_KEY; no gpg installation or keyring needed. -->
+              <signer>bc</signer>
+            </configuration>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>${central-publishing-maven-plugin.version}</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <!-- Uploaded deployments wait for manual review on central.sonatype.com. -->
+              <autoPublish>false</autoPublish>
+              <excludeArtifacts>
+                <artifact>endpointguard-sample</artifact>
+              </excludeArtifacts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

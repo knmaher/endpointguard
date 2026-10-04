@@ -21,3 +21,5 @@
 - Sample application: a deliberately broken `insecure` profile (misplaced `/api/**` permitAll), a test asserting EndpointGuard catches it, and an opt-in demo (`-Dendpointguard.demo=insecure`) that fails the build.
 - Remove the `junit.version` override, which did not pin JUnit Jupiter (Spring Boot 4 manages JUnit 6) and redirected JUnit 4 to a non-existent version.
 - Restructure the README around the quick start, supported versions, configuration, and limitations; update the security policy.
+- Maven Central release setup: `release` profile (sources, Javadoc, signing, Central publishing), tag-triggered release workflow, and `RELEASING.md`.
+- Published POMs declare their own developer, SCM, and issue tracker instead of inheriting the Spring team's from `spring-boot-starter-parent`, and module URLs point at the repository root.
