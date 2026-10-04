@@ -55,7 +55,7 @@ class AnonymousProbeTest {
         AuthorizationResult result = probe("GET /api/public");
 
         assertThat(result.outcome()).isEqualTo(Outcome.ALLOWED);
-        assertThat(result.status()).isEmpty();
+        assertThat(result.status()).isNull();
         assertThat(result.detail()).isEqualTo("Anonymous GET /api/public passed the SecurityFilterChain and method security.");
     }
 
@@ -64,7 +64,7 @@ class AnonymousProbeTest {
         AuthorizationResult result = probe("GET /api/profile");
 
         assertThat(result.outcome()).isEqualTo(Outcome.DENIED);
-        assertThat(result.status()).hasValue(401);
+        assertThat(result.status()).isEqualTo(401);
         assertThat(result.detail()).isEqualTo(
                 "Anonymous GET /api/profile was rejected by the SecurityFilterChain with HTTP 401 Unauthorized.");
     }
@@ -74,7 +74,7 @@ class AnonymousProbeTest {
         AuthorizationResult result = probe("GET /api/admin");
 
         assertThat(result.outcome()).isEqualTo(Outcome.DENIED);
-        assertThat(result.status()).hasValue(401);
+        assertThat(result.status()).isEqualTo(401);
         assertThat(result.detail()).contains("rejected by method security");
     }
 

@@ -1,7 +1,6 @@
 package io.github.knmaher.endpointguard.spring;
 
 import java.util.Objects;
-import java.util.OptionalInt;
 
 import io.github.knmaher.endpointguard.AuthorizationResult;
 import io.github.knmaher.endpointguard.EndpointDescriptor;
@@ -72,7 +71,7 @@ public final class AnonymousProbe {
             return classify(endpoint, path, result.getRequest(), result.getResponse());
         }
         catch (Exception ex) {
-            return AuthorizationResult.inconclusive(endpoint, OptionalInt.empty(),
+            return AuthorizationResult.inconclusive(endpoint, null,
                     "Probe request " + endpoint.method() + " " + path + " failed: " + describe(ex));
         }
         finally {
@@ -100,7 +99,7 @@ public final class AnonymousProbe {
                     description + " was redirected by the SecurityFilterChain to "
                             + response.getHeader(HttpHeaders.LOCATION) + " (HTTP " + statusText(status) + ").");
         }
-        return AuthorizationResult.inconclusive(endpoint, OptionalInt.of(status),
+        return AuthorizationResult.inconclusive(endpoint, status,
                 description + " was answered by the SecurityFilterChain with HTTP " + statusText(status)
                         + ", which is neither a rejection nor a pass-through.");
     }

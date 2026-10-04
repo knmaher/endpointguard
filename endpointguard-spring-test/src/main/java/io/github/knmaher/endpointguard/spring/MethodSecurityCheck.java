@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.aop.Advisor;
 import org.springframework.aop.PointcutAdvisor;
@@ -77,13 +78,13 @@ final class MethodSecurityCheck {
 
     private static final class NonInvokingMethodInvocation implements MethodInvocation {
 
-        private final Object target;
+        private final @Nullable Object target;
         private final Method method;
         private final Object[] arguments;
         private final List<MethodInterceptor> interceptors;
         private int next;
 
-        NonInvokingMethodInvocation(Object target, Method method, List<MethodInterceptor> interceptors) {
+        NonInvokingMethodInvocation(@Nullable Object target, Method method, List<MethodInterceptor> interceptors) {
             this.target = target;
             this.method = method;
             this.arguments = new Object[method.getParameterCount()];
@@ -91,7 +92,7 @@ final class MethodSecurityCheck {
         }
 
         @Override
-        public Object proceed() throws Throwable {
+        public @Nullable Object proceed() throws Throwable {
             if (next == interceptors.size()) {
                 return null;
             }
@@ -109,7 +110,7 @@ final class MethodSecurityCheck {
         }
 
         @Override
-        public Object getThis() {
+        public @Nullable Object getThis() {
             return target;
         }
 
