@@ -1,6 +1,7 @@
 package io.github.knmaher.endpointguard.spring;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -35,7 +36,8 @@ final class ProbeBoundaryFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         request.setAttribute(REACHED_ATTRIBUTE, Boolean.TRUE);
-        EndpointDescriptor endpoint = (EndpointDescriptor) request.getAttribute(ENDPOINT_ATTRIBUTE);
+        EndpointDescriptor endpoint = Objects.requireNonNull(
+                (EndpointDescriptor) request.getAttribute(ENDPOINT_ATTRIBUTE), "probe request without endpoint attribute");
         try {
             methodSecurity.check(endpoint.controllerClass(), endpoint.controllerMethod());
         }

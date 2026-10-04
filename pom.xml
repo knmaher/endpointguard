@@ -23,6 +23,7 @@
     <junit.version>5.14.1</junit.version>
   </properties>
   <modules>
+    <module>endpointguard-annotations</module>
     <module>endpointguard-core</module>
     <module>endpointguard-spring-test</module>
     <module>endpointguard-sample</module>

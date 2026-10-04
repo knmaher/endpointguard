@@ -34,7 +34,7 @@ class AnonymousProbeFormLoginTest {
         AuthorizationResult result = new AnonymousProbe(context).probe(dashboard);
 
         assertThat(result.outcome()).isEqualTo(Outcome.DENIED);
-        assertThat(result.status()).hasValue(302);
+        assertThat(result.status()).isEqualTo(302);
         assertThat(result.detail()).contains("redirected by the SecurityFilterChain to").contains("/login");
     }
 

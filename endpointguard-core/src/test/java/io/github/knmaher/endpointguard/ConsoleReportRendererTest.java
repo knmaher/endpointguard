@@ -1,7 +1,8 @@
 package io.github.knmaher.endpointguard;
 
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
+
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ class ConsoleReportRendererTest {
                         "Anonymous DELETE /api/admin/users/1 passed the SecurityFilterChain and method security.")),
                 policy.evaluate(AuthorizationResult.denied(catalog, 401,
                         "Anonymous GET /api/catalog was rejected by the SecurityFilterChain with HTTP 401 Unauthorized.")),
-                policy.evaluate(AuthorizationResult.inconclusive(export, OptionalInt.of(200),
+                policy.evaluate(AuthorizationResult.inconclusive(export, 200,
                         "Anonymous GET /api/export was answered by the SecurityFilterChain with HTTP 200 OK, which is neither a rejection nor a pass-through."))));
 
         assertThat(renderer.render(report)).isEqualTo("""

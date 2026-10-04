@@ -3,7 +3,7 @@ package io.github.knmaher.endpointguard.sample;
 import java.util.Map;
 import java.util.UUID;
 
-import io.github.knmaher.endpointguard.PublicEndpoint;
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

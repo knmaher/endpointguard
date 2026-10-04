@@ -1,4 +1,4 @@
-package io.github.knmaher.endpointguard;
+package io.github.knmaher.endpointguard.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

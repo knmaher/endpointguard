@@ -1,6 +1,7 @@
 package io.github.knmaher.endpointguard;
 
-import java.util.OptionalInt;
+import io.github.knmaher.endpointguard.annotation.PublicEndpoint;
+
 
 import io.github.knmaher.endpointguard.AuthorizationResult.Outcome;
 import io.github.knmaher.endpointguard.PolicyVerdict.Verdict;
@@ -46,7 +47,7 @@ class PublicEndpointPolicyTest {
     })
     void comparesObservedOutcomeWithExpectation(String handler, Outcome outcome, Verdict expected) throws Exception {
         EndpointDescriptor endpoint = endpoint(MixedController.class, handler);
-        AuthorizationResult result = new AuthorizationResult(endpoint, outcome, OptionalInt.empty(), "observed");
+        AuthorizationResult result = new AuthorizationResult(endpoint, outcome, null, "observed");
 
         PolicyVerdict verdict = policy.evaluate(result);
 

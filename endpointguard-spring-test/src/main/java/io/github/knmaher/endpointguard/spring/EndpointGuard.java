@@ -29,16 +29,19 @@ public final class EndpointGuard {
     }
 
     /**
-     * Scans the application, prints the report, and throws an {@link AssertionError} carrying the
-     * report when any endpoint violates its authorization contract.
+     * Scans the application and throws an {@link AssertionError} carrying the rendered report
+     * when any endpoint violates its authorization contract. Nothing is printed on success.
      */
     public static SecurityReport verify(WebApplicationContext context) {
         SecurityReport report = scan(context);
-        String rendered = new ConsoleReportRenderer().render(report);
         if (report.hasViolations()) {
-            throw new AssertionError(rendered);
+            throw new AssertionError(render(report));
         }
-        System.out.println(rendered);
         return report;
+    }
+
+    /** Renders a report as plain text, as used in failure messages. */
+    public static String render(SecurityReport report) {
+        return new ConsoleReportRenderer().render(report);
     }
 }
